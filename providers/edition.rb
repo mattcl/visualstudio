@@ -57,13 +57,14 @@ action :install do
         path new_resource.install_dir
         recursive true
       end
-      
+
       windows_package new_resource.package_name do
         source installer_exe
         installer_type :custom
         options visual_studio_options
         timeout 3600 # 1hour
         returns [0, 127, 3010]
+        retries 2
       end
 
       # Cleanup extracted ISO files from tmp dir
@@ -142,7 +143,7 @@ def prepare_vs2017_options
   option_include_optional = node['visualstudio'][new_resource.version.to_s]['includeOptional']
   options_components_to_install = ''
 
-  # Merge the VS version and edition default AdminDeploymentFile.xml item's with customized install_items  
+  # Merge the VS version and edition default AdminDeploymentFile.xml item's with customized install_items
   node['visualstudio'][new_resource.version.to_s][new_resource.edition.to_s]['default_install_items'].each do |key, attributes|
     if attributes.has_key?('selected')
       if (attributes['selected'])
@@ -151,7 +152,7 @@ def prepare_vs2017_options
     end
   end
 
-  setup_options = '--norestart --passive --wait'
+  setup_options = '--norestart --quiet --wait --nocache'
   setup_options << " --installPath \"#{new_resource.install_dir}\"" unless new_resource.install_dir.empty?
   setup_options << " --all" if option_all
   setup_options << " --allWorkloads" if option_allWorkloads
